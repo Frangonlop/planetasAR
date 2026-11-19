@@ -1,30 +1,43 @@
-using TMPro;
+
 using UnityEngine;
 
 public class EnemigoController : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI textMeshProUGUI;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void OnTriggerEnter(Collider collider)
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-     
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("suelo"))
+        // Cuando toca el suelo
+        if (collider.CompareTag("suelo"))
         {
             if (gameObject.CompareTag("enemigo"))
             {
-                textMeshProUGUI.text = "Pierdes vida";
+                JuegoSueloController.instanciaJuego
+                    .choqueSueloEnemigo();
+
+                JuegoSueloController.instanciaJuego
+                    .CrearEfectoEnemigo(transform.position);
             }
+            else if (gameObject.CompareTag("amigo"))
+            {
+                JuegoSueloController.instanciaJuego
+                    .choqueSueloAmigo();
+
+                JuegoSueloController.instanciaJuego
+                    .CrearEfectoAmigo(transform.position);
+            }
+
             Destroy(gameObject);
+        }
+
+        // Cuando recibe un disparo
+        if (collider.CompareTag("proyectil"))
+        {
+            if (gameObject.CompareTag("enemigo"))
+            {
+                JuegoSueloController.instanciaJuego
+                    .CrearEfectoEnemigo(transform.position);
+
+                Destroy(gameObject);
+            }
         }
     }
 }
