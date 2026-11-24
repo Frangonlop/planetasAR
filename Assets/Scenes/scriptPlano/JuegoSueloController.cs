@@ -2,11 +2,14 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class JuegoSueloController : MonoBehaviour
 {
     [Header("Interfaz")]
     [SerializeField] TextMeshProUGUI textoVidas;
+    [SerializeField] TextMeshProUGUI textoPuntuacion;
+    [SerializeField] TextMeshProUGUI puntuacionFinal;
     [SerializeField] GameObject pantallaGameOver;
 
     [Header("Prefabs")]
@@ -19,12 +22,13 @@ public class JuegoSueloController : MonoBehaviour
 
     [Header("Configuracion del juego")]
     [SerializeField] private int vidasIniciales = 3;
-    [SerializeField] private float alturaEnemigos = 3.0f;
-    [SerializeField] private float rangoSpawn = 1.0f;
+    [SerializeField] private float alturaEnemigos = 4.0f;
+    [SerializeField] private float rangoSpawn = 0.75f;
 
     private int vidas;
     private int puntuacion = 0;
 
+    private Coroutine corrutinaGeneracion;
     public bool juegoActivo = false;
 
     public static JuegoSueloController instanciaJuego;
@@ -65,6 +69,7 @@ public class JuegoSueloController : MonoBehaviour
             puntuacion = 0;
 
             ActualizarVidas();
+            ActualizarPuntuacion();
 
             if (pantallaGameOver != null)
             {
@@ -72,7 +77,7 @@ public class JuegoSueloController : MonoBehaviour
             }
 
             juegoActivo = true;
-            StartCoroutine(GenerarObjetos());
+            corrutinaGeneracion = StartCoroutine(GenerarObjetos());
         }
     }
 
@@ -118,14 +123,34 @@ public class JuegoSueloController : MonoBehaviour
             GameOver();
         }
     }
-
-    // Cuando un amigo toca el suelo
-    public void choqueSueloAmigo()
+    // Sumar puntos al disparar a un enemigo
+    public void SumarPuntos()
     {
         if (!juegoActivo)
             return;
 
         puntuacion++;
+
+        ActualizarPuntuacion();
+    }
+
+    // Restar puntos al disparar a un amigo
+    public void RestarPuntos()
+    {
+        if (!juegoActivo)
+            return;
+
+        puntuacion--;
+
+        ActualizarPuntuacion();
+    }
+
+    private void ActualizarPuntuacion()
+    {
+        if (textoPuntuacion != null)
+        {
+            textoPuntuacion.text = "Puntuación: " + puntuacion;
+        }
     }
 
     // Actualizar el texto de vidas
@@ -137,9 +162,12 @@ public class JuegoSueloController : MonoBehaviour
         }
     }
 
+
+
     // Terminar la partida
     private void GameOver()
     {
+        puntuacionFinal.text = "Puntuacion final:" + puntuacion;
         juegoActivo = false;
 
         if (pantallaGameOver != null)
@@ -151,29 +179,97 @@ public class JuegoSueloController : MonoBehaviour
     // Efecto de destruccion de enemigo
     public void CrearEfectoEnemigo(Vector3 posicion)
     {
-        if (particulasEnemigo != null)
+        if (particulasEnemigo == null)
+            return;
+
+        GameObject efecto = Instantiate(
+            particulasEnemigo,
+            posicion,
+            Quaternion.identity
+        );
+
+        efecto.SetActive(true);
+
+        ParticleSystem sistema =
+            efecto.GetComponentInChildren<ParticleSystem>(true);
+
+        if (sistema != null)
         {
-            GameObject efecto = Instantiate(
-                particulasEnemigo,
-                posicion,
-                Quaternion.identity
-            );
+            sistema.Play(true);
         }
+        Destroy(efecto, 3f);
     }
 
     // Efecto de destruccion de amigo
     public void CrearEfectoAmigo(Vector3 posicion)
     {
-        if (particulasAmigo != null)
+        if (particulasAmigo == null)
+            return;
+
+        GameObject efecto = Instantiate(
+            particulasAmigo,
+            posicion,
+            Quaternion.identity
+        );
+
+        efecto.SetActive(true);
+
+        ParticleSystem sistema =
+            efecto.GetComponentInChildren<ParticleSystem>(true);
+
+        if (sistema != null)
         {
-            GameObject efecto = Instantiate(
-                particulasAmigo,
-                posicion,
-                Quaternion.identity
-            );
+            sistema.Play(true);
         }
+        Destroy(efecto, 3f);
+    }
+    public void VolverAJugar()
+    {
+        // Detener la generación anterior si sigue activa
+        if (corrutinaGeneracion != null)
+        {
+            StopCoroutine(corrutinaGeneracion);
+            corrutinaGeneracion = null;
+        }
+
+        // Restaurar vidas y puntuación
+        vidas = vidasIniciales;
+        puntuacion = 0;
+
+        ActualizarVidas();
+        ActualizarPuntuacion();
+
+        // Ocultar pantalla Game Over
+        if (pantallaGameOver != null)
+        {
+            pantallaGameOver.SetActive(false);
+        }
+
+        // Eliminar objetos anteriores
+        foreach (Transform hijo in transform)
+        {
+            Destroy(hijo.gameObject);
+        }
+
+        // Reactivar el juego
+        juegoActivo = true;
+
+        // Iniciar una única corrutina
+        corrutinaGeneracion = StartCoroutine(GenerarObjetos());
     }
 
+    public void VolverAlInicio()
+    {
+        juegoActivo = false;
+
+        // Cargar la escena inicial
+        SceneManager.LoadScene("MenuPrincipalPlano");
+    }
+    public void Jugar()
+    {
+        // Cargar la escena de juego
+        SceneManager.LoadScene("DeteccionPlano");
+    }
     public void depurar(string msg)
     {
         if (textoVidas != null)

@@ -1,4 +1,5 @@
 
+using TMPro;
 using UnityEngine;
 
 public class EnemigoController : MonoBehaviour
@@ -19,9 +20,6 @@ public class EnemigoController : MonoBehaviour
             else if (gameObject.CompareTag("amigo"))
             {
                 JuegoSueloController.instanciaJuego
-                    .choqueSueloAmigo();
-
-                JuegoSueloController.instanciaJuego
                     .CrearEfectoAmigo(transform.position);
             }
 
@@ -34,9 +32,24 @@ public class EnemigoController : MonoBehaviour
             if (gameObject.CompareTag("enemigo"))
             {
                 JuegoSueloController.instanciaJuego
+                    .SumarPuntos();
+
+                JuegoSueloController.instanciaJuego
                     .CrearEfectoEnemigo(transform.position);
 
                 Destroy(gameObject);
+                Destroy(collider.gameObject);
+            }
+            else if (gameObject.CompareTag("amigo"))
+            {
+                JuegoSueloController.instanciaJuego
+                    .RestarPuntos();
+
+                JuegoSueloController.instanciaJuego
+                    .CrearEfectoAmigo(transform.position);
+
+                Destroy(gameObject);
+                Destroy(collider.gameObject);
             }
         }
     }
